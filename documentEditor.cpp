@@ -21,6 +21,27 @@ public:
     }
 };
 
+class ImageElement: public DocumentElement {
+private:
+    string imagePath;
+public:
+    ImageElement(const string& imagePath) {
+        this -> imagePath = imagePath;
+    }
+    string render () override {
+        return "[Image: " + imagePath + "]";
+    }
+};
+
+
+//NewLine class for document editor
+class NewLine : public DocumentElement {
+public:
+    string render() override {
+        return "\n";
+    }
+};
+
 class DocumentEditor {
 private:
     vector<string> docElements;
