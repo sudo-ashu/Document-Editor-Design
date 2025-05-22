@@ -1,17 +1,37 @@
 #include<bits/stdc++.h>
 using namespace std;
 
+
+//Abstraction for document elements
+class DocumentElement {
+public:
+    virtual string render() = 0;
+};
+
+//Concrete implementation of text elements
+class TextElement: public DocumentElement {
+private:
+    string text;
+public:
+    TextElement(const string& text) {
+        this -> text = text;
+    }
+    string render () override {
+        return text;
+    }
+};
+
 class DocumentEditor {
 private:
     vector<string> docElements;
     string renderedDocument;
 
 public:
-    void addText(string text) {
+    void addText(const string& text) {
         docElements.push_back(text);
     }
 
-    void addImage(string path) {
+    void addImage(const string& path) {
         docElements.push_back(path);
     }
 
