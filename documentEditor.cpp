@@ -42,60 +42,125 @@ public:
     }
 };
 
-class DocumentEditor {
-private:
-    vector<string> docElements;
-    string renderedDocument;
-
+//tab class for document editor
+class Tab : public DocumentElement {
 public:
-    void addText(const string& text) {
-        docElements.push_back(text);
+    string render() override {
+        return "\t";
     }
+};
 
-    void addImage(const string& path) {
-        docElements.push_back(path);
+
+//Document class for DocumentElement
+class Document {
+private:
+    vector<DocumentElement*> elements;
+public:
+    void addElements(DocumentElement* element) {
+        elements.push_back(element);
     }
 
     //renders the document by checking the type of each element
-    string renderDocument() {
-        if (renderedDocument.empty()) {
-            string result;
-            for (const auto element: docElements) {
-                int n = element.size();
-
-                // Check if the element is a text or an image
-                if (n>4 and element.substr(n-4) == ".png" or element.substr(n-4) == ".jpg") {
-                    result += "[Image: " + element + "]" + "\n";
-                } else
-                    result += element + "\n";
-            }
-            renderedDocument = result;
+    string render () {
+        string result;
+        for (auto& element: elements) {
+            result += element -> render();
         }
-        return renderedDocument;
-    }
+        return result;
+    } 
+};
 
-    void saveToFile() {
-        ofstream outFile("document.txt");
-        if (outFile.is_open()) {
-            outFile << renderDocument();
+
+//Persistence (Abstranction) class for saving the document
+class Persistence {
+public:
+    virtual void save (string data) = 0;
+};
+
+//implementation of Filestorage class
+class FileStorage : public Persistence {
+public:
+    void save (string data) override {  
+        ofstream outFile ("document.txt");
+        if (outFile) {
+            outFile << data;
             outFile.close();
             cout << "Document saved to document.txt" << endl;
         } else {
             cout << "Error: Unable to open file" << endl;
         }
     }
+};
+
+class DatabaseStorage : public Persistence {
+public:
+    void save (string data) override {
+        // Simulate saving to a database
+        cout << "Document saved to database: " << data << endl;
+    }
+};
+
+
+
+//DocumentEditor class to manage the document
+class DocumentEditor {
+private:
+    Document* doc;
+    Persistence* db;
+    string renderedDocument;
+
+public:
+    DocumentEditor(Document* doc, Persistence* db) {
+       this -> doc = doc;
+       this -> db = db;
+    }
+    void addText(const string& text) {
+        doc -> addElements(new TextElement(text));
+    }
+
+    void addImage(const string& path) {
+        doc -> addElements(new ImageElement(path));
+    }
+
+    void addNewLine() {
+        doc -> addElements(new NewLine());
+    }
+
+    void addTab() {
+        doc -> addElements(new Tab());
+    }
+
+    //renders the document by checking the type of each element
+    string renderDocument() {
+        if (renderedDocument.empty())
+            renderedDocument = doc -> render();
+        return renderedDocument;
+    }
+
+    void saveDocument() {
+        db -> save(renderDocument());
+    }
     
 };
 
 int main () {
-    DocumentEditor editor;
-    editor.addText("Hola! this is Ashutosh.");
-    editor.addImage("image1.png");
-    editor.addText("This is a text.");
-    editor.addImage("image2.jpg");
+    Document* document = new Document();
+    Persistence* persistence = new FileStorage();
+    DocumentEditor* editor = new DocumentEditor(document, persistence);
 
-    cout << editor.renderDocument() << endl;
-    editor.saveToFile();
+    //simulating a client using the document editor
+    editor -> addText("Hola! this is Ashutosh.");
+    editor -> addNewLine();
+    editor -> addImage("image1.png");
+    editor -> addNewLine();
+    editor -> addText("This is a text.");
+    editor -> addTab();
+    editor -> addImage("image2.jpg");
+    editor -> addNewLine();
+    editor -> addText("This is another text.");
+
+    cout << editor -> renderDocument() << endl;
+    editor -> saveDocument();
 
 
     return 0;
